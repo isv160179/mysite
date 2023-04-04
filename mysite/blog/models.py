@@ -1,9 +1,17 @@
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
 
 
+class PublishedManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(status='published')
+
+
 class Post(models.Model):
+    objects = models.Manager()  # Менеджер по умолчанию.
+    published = PublishedManager()  # Наш новый менеджер.
     STATUS_CHOICES = (
         ('draft', 'Черновик'),
         ('published', 'Опубликовано'),)
@@ -23,6 +31,11 @@ class Post(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES,
                               default='draft',
                               verbose_name='Статус блога')
+
+    def get_absolute_url(self):
+        return reverse('blog:post_detail',
+                       args=[self.publish.year, self.publish.month,
+                             self.publish.day, self.slug])
 
 
 class Meta:
